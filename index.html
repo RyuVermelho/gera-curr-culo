@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerador de Currículo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 0 20px;
+      background: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="email"], textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+    }
+    input[type="file"] {
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #previewFoto {
+      margin-top: 10px;
+      max-width: 120px;
+      border-radius: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Currículo</h1>
+  <form id="formCurriculo">
+    <label for="nome">Nome completo:</label>
+    <input type="text" id="nome" name="nome" required />
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="telefone">Telefone:</label>
+    <input type="text" id="telefone" name="telefone" />
+
+    <label for="formacao">Formação:</label>
+    <textarea id="formacao" name="formacao" rows="3" placeholder="Ex: Bacharel em Administração - Universidade XYZ"></textarea>
+
+    <label for="experiencia">Experiência profissional:</label>
+    <textarea id="experiencia" name="experiencia" rows="4" placeholder="Descreva sua experiência"></textarea>
+
+    <label for="foto">Foto (opcional):</label>
+    <input type="file" id="foto" name="foto" accept="image/*" />
+
+    <img id="previewFoto" alt="Prévia da foto" />
+
+    <button type="submit">Gerar PDF</button>
+  </form>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const form = document.getElementById('formCurriculo');
+    const fotoInput = document.getElementById('foto');
+    const previewFoto = document.getElementById('previewFoto');
+    let fotoDataUrl = '';
+
+    fotoInput.addEventListener('change', () => {
+      const file = fotoInput.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = e => {
+          fotoDataUrl = e.target.result;
+          previewFoto.src = fotoDataUrl;
+          previewFoto.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        fotoDataUrl = '';
+        previewFoto.src = '';
+        previewFoto.style.display = 'none';
+      }
+    });
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const nome = form.nome.value.trim();
+      const email = form.email.value.trim();
+      const telefone = form.telefone.value.trim();
+      const formacao = form.formacao.value.trim();
+      const experiencia = form.experiencia.value.trim();
+
+      let y = 20;
+
+      doc.setFontSize(22);
+      doc.text(nome, 20, y);
+      y += 10;
+
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+
+      if(fotoDataUrl){
+        // Desenha foto no canto direito superior (50x50)
+        doc.addImage(fotoDataUrl, 'JPEG', 150, 10, 40, 50);
+      }
+
+      doc.text(`Email: ${email}`, 20, y);
+      y += 8;
+      if(telefone) {
+        doc.text(`Telefone: ${telefone}`, 20, y);
+        y += 8;
+      }
+
+      y += 10;
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text('Formação:', 20, y);
+      y += 7;
+      doc.setFontSize(12);
+      doc.setTextColor(50);
+      doc.text(doc.splitTextToSize(formacao, 170), 20, y);
+      y += doc.splitTextToSize(formacao, 170).length * 7;
+
+      y += 8;
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text('Experiência:', 20, y);
+      y += 7;
+      doc.setFontSize(12);
+      doc.setTextColor(50);
+      doc.text(doc.splitTextToSize(experiencia, 170), 20, y);
+
+      // Salvar PDF com nome baseado no nome da pessoa
+      const nomeArquivo = nome ? nome.replace(/\s+/g, '_').toLowerCase() : 'curriculo';
+
+      doc.save(`${nomeArquivo}.pdf`);
+    });
+  </script>
+</body>
+</html>
